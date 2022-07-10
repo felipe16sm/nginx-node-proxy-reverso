@@ -1,0 +1,46 @@
+version: "3"
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    restart: always
+    networks:
+      - node-network
+    ports:
+      - "8080:80"
+  node_app:
+    build:
+      context: ./node
+      dockerfile: Dockerfile
+    container_name: node_app
+    volumes:
+      - ./node:/node_app
+    networks:
+      - node-network
+    expose:
+      - 3000
+    command: bash -c "while !</dev/tcp/db/3306; do sleep 10; done; npm install && npm run start"
+    depends_on:
+      - db
+  db:
+    image: mysql:8.0.29
+    command: mysqld --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    container_name: db
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - node-network
+    expose:
+      - 3306
+
+networks:
+  node-network:
+    driver: bridge
