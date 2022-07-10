@@ -4,4 +4,4 @@ WORKDIR /node_app
 
 COPY . .
 
-RUN apk update
+RUN apk update apk add bash
